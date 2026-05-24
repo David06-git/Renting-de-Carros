@@ -30,11 +30,17 @@ public class Metodos {
         System.out.print(mensaje);
         String dato = sc.nextLine();
 
-        if (dato.matches("[0-9]+")) {
+    if (dato.matches("[0-9]+")) {
+        
+        if (dato.length() <= 10) {
             return dato;
+        } else {
+            System.out.println("ERROR. El numero no puede superar los 10 digitos.");
         }
-
+    } else {
         System.out.println("ERROR. Solo numeros.");
+    }
+
         return validarSoloNumeros(mensaje);
     }
 
@@ -90,6 +96,66 @@ public class Metodos {
 
             System.out.println("ERROR. Ingrese un numero valido.");
             return validarFloat(mensaje);
+        }
+    }
+
+
+    public String validarPlaca(String mensaje){
+        System.out.println(mensaje);
+        String dato = sc.nextLine();
+
+        if (dato.trim().isEmpty()){
+            System.out.println("ERROR. Campo vacio.");
+        return validarPlaca(mensaje);
+        }
+
+        if (dato.matches("[a-zA-Z]{3}[0-9]{3}")) {
+        return dato.toUpperCase();
+        } else {
+        System.out.println("ERROR. Placa invalida. (Ejemplo: AAA123).");
+        return validarPlaca(mensaje);
+        }
+    }
+
+    public Cliente validarExistencia(String mensaje){
+        String cedula = validarSoloNumeros(mensaje);
+        Cliente cliente = buscarClienteObjeto(cedula);
+
+        if (cliente == null) {
+        System.out.println("ERROR: El cliente con cedula " + cedula + " no esta registrado.");
+        System.out.println("Por favor, ingrese la cedula de un cliente valido.");
+        return validarExistencia(mensaje);
+    }
+    return cliente;
+
+    }
+
+    public Vehiculo validarExistenciaCarro(String mensaje){
+        String placa = validarPlaca(mensaje);
+        Vehiculo carro = buscarVehiculoObjeto(placa);
+
+        if (carro == null) {
+        System.out.println("ERROR: El vehiculo con placa " + placa + " no esta registrado.");
+        System.out.println("Por favor, ingrese una placa valida.");
+        return validarExistenciaCarro(mensaje); 
+        }
+        return carro;
+    }
+
+    public String validarTraccion(){
+        System.out.println("Elija que traccion desea: ");
+        System.out.println("1. 4x2 ");
+        System.out.println("2. 4x4 ");
+
+        int opcion = validarEntero("Seleccione: ");
+
+        if (opcion == 1) {
+            return "4x2";
+            } else if (opcion == 2) {
+        return "4x4";
+            } else {
+        System.out.println("ERROR. Opcion invalida. Elija 1 o 2.");
+        return validarTraccion(); // Llamada recursiva si mete otro número
         }
     }
 
@@ -234,7 +300,7 @@ public class Metodos {
 
         int opcion = validarEntero("Seleccione: ");
 
-        String placa = validarTexto("Placa: ");
+        String placa = validarPlaca("Placa: ");
 
         if (buscarVehiculoObjeto(placa) != null) {
 
@@ -268,8 +334,7 @@ public class Metodos {
 
         } else if (opcion == 2) {
 
-            String traccion =
-                    validarTexto("Traccion: ");
+            String traccion = validarTraccion();
 
             float maletero =
                     validarFloat("Capacidad maletero: ");
@@ -297,7 +362,7 @@ public class Metodos {
 
     public void buscarVehiculo() {
 
-        String placa = validarTexto("Placa: ");
+        String placa = validarPlaca("Placa: ");
 
         Vehiculo vehiculo = buscarVehiculoObjeto(placa);
 
@@ -314,7 +379,7 @@ public class Metodos {
 
     public void modificarVehiculo() {
 
-        String placa = validarTexto("Placa: ");
+        String placa = validarPlaca("Placa: ");
 
         Vehiculo vehiculo = buscarVehiculoObjeto(placa);
 
@@ -339,7 +404,7 @@ public class Metodos {
 
     public void eliminarVehiculo() {
 
-        String placa = validarTexto("Placa: ");
+        String placa = validarPlaca("Placa: ");
 
         Vehiculo vehiculo = buscarVehiculoObjeto(placa);
 
@@ -406,19 +471,9 @@ public class Metodos {
             return;
         }
 
-        String cedula =
-                validarSoloNumeros("Cedula cliente: ");
+        Cliente cliente = validarExistencia("Cedula cliente: ");
 
-        Cliente cliente =
-                buscarClienteObjeto(cedula);
-
-        if (cliente == null) {
-
-            System.out.println("Cliente no existe.");
-            return;
-        }
-
-        if (clienteTieneContratoActivo(cedula)) {
+        if (clienteTieneContratoActivo(cliente.getCedula())) {
 
             System.out.println(
                     "El cliente ya tiene un vehiculo alquilado.");
@@ -426,17 +481,7 @@ public class Metodos {
             return;
         }
 
-        String placa =
-                validarTexto("Placa vehiculo: ");
-
-        Vehiculo vehiculo =
-                buscarVehiculoObjeto(placa);
-
-        if (vehiculo == null) {
-
-            System.out.println("Vehiculo no existe.");
-            return;
-        }
+        Vehiculo vehiculo = validarExistenciaCarro("Placa vehiculo: ");
 
         if (vehiculo.getEstado()
                 .equalsIgnoreCase("alquilado")) {
@@ -462,8 +507,8 @@ public class Metodos {
         ContratoRenting contrato =
                 new ContratoRenting(
                         id,
-                        cedula,
-                        placa,
+                        cliente.getCedula(), 
+                        vehiculo.getPlaca(),
                         fechaInicio,
                         fechaFin,
                         dias,
