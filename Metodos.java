@@ -1,4 +1,7 @@
-
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.ResolverStyle;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -12,6 +15,21 @@ public class Metodos {
 
     // ================= VALIDACIONES =================
 
+    public boolean telefonoExiste(String telefono) {
+
+    for (Cliente cliente : vector_clientes) {
+
+        if (cliente.getTelefono().equals(telefono)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+    private DateTimeFormatter formatoFecha =
+        DateTimeFormatter.ofPattern("dd/MM/uuuu")
+                .withResolverStyle(ResolverStyle.STRICT);
+
     public String validarSoloLetras(String mensaje) {
 
         System.out.print(mensaje);
@@ -24,6 +42,34 @@ public class Metodos {
         System.out.println("ERROR. Solo letras.");
         return validarSoloLetras(mensaje);
     }
+
+    public boolean clienteTieneContratoActivoPorCedula(String cedula) {
+
+    for (ContratoRenting contrato : vector_contratos) {
+
+        if (contrato.getCedulaCliente().equals(cedula)
+                && contrato.isActivo()) {
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+public boolean vehiculoTieneContratoActivo(String placa) {
+
+    for (ContratoRenting contrato : vector_contratos) {
+
+        if (contrato.getPlacaVehiculo().equalsIgnoreCase(placa)
+                && contrato.isActivo()) {
+
+            return true;
+        }
+    }
+
+    return false;
+}
 
     public String validarSoloNumeros(String mensaje) {
 
@@ -43,6 +89,22 @@ public class Metodos {
 
         return validarSoloNumeros(mensaje);
     }
+
+    public int validarModelo() {
+
+    int anioActual = java.time.LocalDate.now().getYear();
+
+    int modelo = validarEntero("Modelo: ");
+
+    if (modelo >= 1900 && modelo <= anioActual + 1) {
+        return modelo;
+    }
+
+    System.out.println("ERROR. Ingrese un modelo valido entre 1900 y "
+            + (anioActual + 1));
+
+    return validarModelo();
+}
 
     public String validarTexto(String mensaje) {
 
@@ -159,6 +221,24 @@ public class Metodos {
         }
     }
 
+    public String validarFecha(String mensaje) {
+
+    try {
+
+        System.out.print(mensaje);
+        String fechaTexto = sc.nextLine();
+
+        LocalDate.parse(fechaTexto, formatoFecha);
+
+        return fechaTexto;
+
+    } catch (Exception e) {
+
+        System.out.println("ERROR. Formato invalido. Use dd/MM/yyyy.");
+        return validarFecha(mensaje);
+    }
+}
+
     // ================= CLIENTES =================
 
     public void registrarCliente() {
@@ -174,6 +254,11 @@ public class Metodos {
         String nombre = validarSoloLetras("Nombre: ");
         String apellido = validarSoloLetras("Apellido: ");
         String telefono = validarSoloNumeros("Telefono: ");
+        while (telefonoExiste(telefono)) {
+
+    System.out.println("ERROR. Ya existe un cliente registrado con ese telefono.");
+    telefono = validarSoloNumeros("Telefono: ");
+}
         String direccion = validarTexto("Direccion: ");
         String licencia = validarTexto("Licencia: ");
 
@@ -256,27 +341,15 @@ public class Metodos {
 
         Cliente cliente = buscarClienteObjeto(cedula);
 
-        if (cliente != null) {
+       if (cliente != null) {
 
-            vector_clientes.remove(cliente);
+    if (clienteTieneContratoActivoPorCedula(cedula)) {
 
-            for (int i = 0; i < vector_contratos.size(); i++) {
-
-                if (vector_contratos.get(i)
-                        .getCedulaCliente()
-                        .equals(cedula)) {
-
-                    vector_contratos.remove(i);
-                    i--;
-                }
-            }
-
-            System.out.println("Cliente eliminado correctamente.");
-
-        } else {
-
-            System.out.println("Cliente no encontrado.");
+        System.out.println(
+                "No se puede eliminar el cliente porque tiene un contrato activo.");
+        return;
         }
+    }
     }
 
     // ================= VEHICULOS =================
@@ -309,7 +382,7 @@ public class Metodos {
         }
 
         String marca = validarSoloLetras("Marca: ");
-        int modelo = validarEntero("Modelo: ");
+        int modelo = validarModelo();
         float precio = validarFloat("Precio diario: ");
 
         if (opcion == 1) {
@@ -389,7 +462,7 @@ public class Metodos {
                     validarSoloLetras("Nueva marca: "));
 
             vehiculo.setModelo(
-                    validarEntero("Nuevo modelo: "));
+        validarModelo());
 
             vehiculo.setPrecioDiario(
                     validarFloat("Nuevo precio: "));
@@ -410,25 +483,13 @@ public class Metodos {
 
         if (vehiculo != null) {
 
-            vector_vehiculos.remove(vehiculo);
+    if (vehiculoTieneContratoActivo(placa)) {
 
-            for (int i = 0; i < vector_contratos.size(); i++) {
-
-                if (vector_contratos.get(i)
-                        .getPlacaVehiculo()
-                        .equalsIgnoreCase(placa)) {
-
-                    vector_contratos.remove(i);
-                    i--;
-                }
-            }
-
-            System.out.println("Vehiculo eliminado correctamente.");
-
-        } else {
-
-            System.out.println("Vehiculo no encontrado.");
-        }
+        System.out.println(
+                "No se puede eliminar el vehiculo porque tiene un contrato activo.");
+        return;
+    }
+}
     }
 
     // ================= CONTRATOS =================
@@ -491,30 +552,34 @@ public class Metodos {
 
             return;
         }
+  String fechaInicio = validarFecha("Fecha inicio (dd/MM/yyyy): ");
+String fechaFin = validarFecha("Fecha fin (dd/MM/yyyy): ");
 
-        String fechaInicio =
-                validarTexto("Fecha inicio: ");
+LocalDate inicio = LocalDate.parse(fechaInicio, formatoFecha);
+LocalDate fin = LocalDate.parse(fechaFin, formatoFecha);
 
-        String fechaFin =
-                validarTexto("Fecha fin: ");
+long dias = ChronoUnit.DAYS.between(inicio, fin);
 
-        int dias =
-                validarEntero("Total dias: ");
+if (dias <= 0) {
 
-        float valorTotal =
-                dias * vehiculo.getPrecioDiario();
+    System.out.println("ERROR. La fecha final debe ser posterior a la fecha inicial.");
+    return;
+}
+
+      float valorTotal =
+        (float) dias * vehiculo.getPrecioDiario();
 
         ContratoRenting contrato =
-                new ContratoRenting(
-                        id,
-                        cliente.getCedula(), 
-                        vehiculo.getPlaca(),
-                        fechaInicio,
-                        fechaFin,
-                        dias,
-                        valorTotal,
-                        true
-                );
+               new ContratoRenting(
+        id,
+        cliente.getCedula(),
+        vehiculo.getPlaca(),
+        fechaInicio,
+        fechaFin,
+        (int) dias,
+        valorTotal,
+        true
+);  
 
         vector_contratos.add(contrato);
 
